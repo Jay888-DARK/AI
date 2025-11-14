@@ -121,7 +121,7 @@
         const INITIAL_SYSTEM_PROMPT = "You are a friendly, helpful, and concise AI assistant. Format code or commands using markdown code blocks. Keep the tone encouraging.";
 
         let apiKey = localStorage.getItem('geminiApiKey'); // Load API key from local storage
-        let chatHistory = []; // Stores conversation history for context
+        let chatHistory = []; // Stores conversation history for context (only user/model roles)
         let isSending = false; // Flag to prevent multiple concurrent requests
         let errorCount = 0; // For exponential backoff retry logic
 
@@ -148,10 +148,8 @@
                 apiKeyModal.classList.add('hidden');
                 sendButton.disabled = false;
                 userInput.placeholder = "Type your message here...";
-                chatHistory.push({
-                    role: "systemInstruction",
-                    parts: [{ text: INITIAL_SYSTEM_PROMPT }]
-                });
+                // FIX: Clear chat history on load/key check to ensure no leftover system instruction
+                chatHistory = []; 
             } else {
                 apiKeyModal.classList.remove('hidden');
                 sendButton.disabled = true;
@@ -252,9 +250,9 @@
 
             // --- API Request Setup ---
             const payload = {
-                // The contents array holds the entire chat history for context
+                // The contents array holds the entire chat history for context (only user/model roles)
                 contents: chatHistory,
-                // System Instruction is defined separately for the model's persona
+                // The System Instruction is now correctly passed as a separate, top-level property
                 systemInstruction: {
                     parts: [{ text: INITIAL_SYSTEM_PROMPT }]
                 },
