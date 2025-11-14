@@ -120,6 +120,9 @@
         const MODEL = "gemini-2.5-flash-preview-09-2025";
         const INITIAL_SYSTEM_PROMPT = "You are a friendly, helpful, and concise AI assistant. Format code or commands using markdown code blocks. Keep the tone encouraging.";
 
+        // API Key provided by the user (AIzaSyA7VVy1LUCoc2DrBIceyRWiw9j941ylcn4)
+        const PREFILLED_API_KEY = "AIzaSyA7VVy1LUCoc2DrBIceyRWiw9j941ylcn4";
+
         let apiKey = localStorage.getItem('geminiApiKey'); // Load API key from local storage
         let chatHistory = []; // Stores conversation history for context (only user/model roles)
         let isSending = false; // Flag to prevent multiple concurrent requests
@@ -142,15 +145,19 @@
 
         /**
          * Checks if the API key is present and updates the UI accordingly.
+         * Also prefills the input if the key is available but not saved yet.
          */
         function checkApiKey() {
             if (apiKey) {
                 apiKeyModal.classList.add('hidden');
                 sendButton.disabled = false;
                 userInput.placeholder = "Type your message here...";
-                // FIX: Clear chat history on load/key check to ensure no leftover system instruction
                 chatHistory = []; 
             } else {
+                // If no key is saved in localStorage, use the prefilled key to populate the input field
+                if (PREFILLED_API_KEY) {
+                    apiKeyInput.value = PREFILLED_API_KEY;
+                }
                 apiKeyModal.classList.remove('hidden');
                 sendButton.disabled = true;
                 userInput.placeholder = "Enter API Key above to start chat.";
@@ -231,7 +238,13 @@
          * Sends the user's message and retrieves the response from the Gemini API.
          */
         async function sendMessage() {
-            if (isSending || !apiKey) return;
+            if (isSending || !apiKey) {
+                if (!apiKey) {
+                    // Custom check to help guide the user to the correct solution
+                    displayError("API Key is missing. Please enter your Gemini API Key in the yellow box above.");
+                }
+                return;
+            }
 
             const userText = userInput.value.trim();
             if (!userText) return;
@@ -293,6 +306,7 @@
 
                 } catch (error) {
                     errorCount++;
+                    // A 400 or 403 (Invalid Key) error might be returned here
                     responseText = `API Error: ${error.message}. Retrying in ${retryDelay / 1000}s...`;
                     displayError(responseText);
 
